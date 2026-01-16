@@ -1,66 +1,301 @@
 import 'package:flutter/material.dart';
 import '../models/word.dart';
 import '../services/api_service.dart';
+import '../services/search_history_service.dart';
 import 'word_detail_screen.dart';
 
 class SearchScreen extends StatefulWidget {
+  const SearchScreen({Key? key}) : super(key: key);
+
   @override
-  _SearchScreenState createState() => _SearchScreenState();
+  State<SearchScreen> createState() => _SearchScreenState();
 }
 
 class _SearchScreenState extends State<SearchScreen> {
-  List<Word> words = [];
-  bool loading = false;
+  final TextEditingController _searchCtrl = TextEditingController();
 
-  void search(String text) async {
-    setState(() => loading = true);
+  List<Word> words = [];
+  List<String> history = [];
+
+  bool _isLoading = false;
+  bool _hasSearched = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadHistory();
+  }
+
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
+  }
+
+  // 🔹 Load history
+  Future<void> _loadHistory() async {
+    history = await SearchHistoryService.getHistory();
+    if (mounted) setState(() {});
+  }
+
+  // 🔹 Search handler
+  Future<void> _handleSearch(String text) async {
+    text = text.trim();
+    if (text.isEmpty) return;
+
+    FocusScope.of(context).unfocus();
+
+    setState(() {
+      _isLoading = true;
+      _hasSearched = true;
+    });
+
+    // Save to history
+    await SearchHistoryService.addHistory(text);
+    await _loadHistory();
+
     try {
-      words = await ApiService.searchWord(text);
+      final results = await ApiService.searchWord(text);
+      if (!mounted) return;
+      setState(() {
+        words = results;
+      });
     } catch (e) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(e.toString())));
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
-    setState(() => loading = false);
+  }
+
+  void _clearSearch() {
+    _searchCtrl.clear();
+    setState(() {
+      words = [];
+      _hasSearched = false;
+    });
+  }
+
+  // 🔹 Clear history
+  Future<void> _clearHistory() async {
+    await SearchHistoryService.clearHistory();
+    await _loadHistory();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Dictionary')),
+      backgroundColor: Colors.grey[50],
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        title: const Text(
+          'Dictionary',
+          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout, color: Colors.grey),
+            onPressed: () {
+              Navigator.pushReplacementNamed(context, '/login');
+            },
+          )
+        ],
+      ),
       body: Column(
         children: [
-          Padding(
-            padding: EdgeInsets.all(8),
+          // 🔍 Search Bar
+          Container(
+            padding: const EdgeInsets.all(16),
+            color: Colors.white,
             child: TextField(
+              controller: _searchCtrl,
+              textInputAction: TextInputAction.search,
+              onSubmitted: _handleSearch,
               decoration: InputDecoration(
-                hintText: 'Search word',
-                border: OutlineInputBorder(),
+                hintText: 'Search for a word...',
+                filled: true,
+                fillColor: Colors.grey[100],
+                prefixIcon: const Icon(Icons.search, color: Colors.grey),
+                suffixIcon: _searchCtrl.text.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear, color: Colors.grey),
+                        onPressed: _clearSearch,
+                      )
+                    : null,
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(30),
+                  borderSide: BorderSide.none,
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(30),
+                  borderSide:
+                      const BorderSide(color: Colors.blue, width: 1.5),
+                ),
               ),
-              onSubmitted: search,
+              onChanged: (_) => setState(() {}),
+            ),
+          ),
+
+          // 🔹 Content
+          Expanded(
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : _buildContent(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 🔹 Content builder
+  Widget _buildContent() {
+    // 1️⃣ Not searched yet → show history
+    if (!_hasSearched) {
+      if (history.isEmpty) {
+        return _emptyState(
+          icon: Icons.book_outlined,
+          text: 'Type a word to start searching',
+        );
+      }
+
+      return Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Search History',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                TextButton(
+                  onPressed: _clearHistory,
+                  child: const Text('Clear'),
+                ),
+              ],
             ),
           ),
           Expanded(
-            child: loading
-                ? Center(child: CircularProgressIndicator())
-                : ListView.builder(
-                    itemCount: words.length,
-                    itemBuilder: (context, i) {
-                      return ListTile(
-                        title: Text(words[i].englishWord),
-                        subtitle: Text(words[i].khmerPhonetic),
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) =>
-                                  WordDetailScreen(word: words[i]),
-                            ),
-                          );
-                        },
-                      );
-                    },
+            child: ListView.builder(
+              itemCount: history.length,
+              itemBuilder: (context, i) {
+                final item = history[i];
+                return ListTile(
+                  leading: const Icon(Icons.history),
+                  title: Text(item),
+                  onTap: () {
+                    _searchCtrl.text = item;
+                    _handleSearch(item);
+                  },
+                );
+              },
+            ),
+          ),
+        ],
+      );
+    }
+
+    // 2️⃣ Searched but no results
+    if (words.isEmpty) {
+      return _emptyState(
+        icon: Icons.search_off,
+        text: 'No results found',
+      );
+    }
+
+    // 3️⃣ Results list
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: words.length,
+      itemBuilder: (context, i) {
+        final word = words[i];
+        return Card(
+          elevation: 2,
+          margin: const EdgeInsets.only(bottom: 12),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(12),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => WordDetailScreen(word: word),
+                ),
+              );
+            },
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: Colors.blue.withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child:
+                        const Icon(Icons.translate, color: Colors.blue),
                   ),
-          )
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          word.englishWord,
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          word.khmerPhonetic,
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey[600],
+                            fontStyle: FontStyle.italic,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Icon(Icons.arrow_forward_ios,
+                      size: 16, color: Colors.grey[400]),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  // 🔹 Reusable empty state
+  Widget _emptyState({required IconData icon, required String text}) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, size: 80, color: Colors.grey[300]),
+          const SizedBox(height: 16),
+          Text(
+            text,
+            style: TextStyle(color: Colors.grey[500], fontSize: 16),
+          ),
         ],
       ),
     );

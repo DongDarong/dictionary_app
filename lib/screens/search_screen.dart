@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/word.dart';
 import '../services/api_service.dart';
 import '../services/search_history_service.dart';
+import '../services/favorite_service.dart';
 import 'word_detail_screen.dart';
 
 class SearchScreen extends StatefulWidget {
@@ -16,6 +17,7 @@ class _SearchScreenState extends State<SearchScreen> {
 
   List<Word> words = [];
   List<String> history = [];
+  List<String> favorites = [];
 
   bool _isLoading = false;
   bool _hasSearched = false;
@@ -24,6 +26,7 @@ class _SearchScreenState extends State<SearchScreen> {
   void initState() {
     super.initState();
     _loadHistory();
+    _loadFavorites();
   }
 
   @override
@@ -32,13 +35,19 @@ class _SearchScreenState extends State<SearchScreen> {
     super.dispose();
   }
 
-  // 🔹 Load history
+  // 🔹 Load search history
   Future<void> _loadHistory() async {
     history = await SearchHistoryService.getHistory();
     if (mounted) setState(() {});
   }
 
-  // 🔹 Search handler
+  // 🔹 Load favorites
+  Future<void> _loadFavorites() async {
+    favorites = await FavoriteService.getFavorites();
+    if (mounted) setState(() {});
+  }
+
+  // 🔹 Handle search
   Future<void> _handleSearch(String text) async {
     text = text.trim();
     if (text.isEmpty) return;
@@ -75,6 +84,7 @@ class _SearchScreenState extends State<SearchScreen> {
     }
   }
 
+  // 🔹 Clear search
   void _clearSearch() {
     _searchCtrl.clear();
     setState(() {
@@ -157,7 +167,7 @@ class _SearchScreenState extends State<SearchScreen> {
     );
   }
 
-  // 🔹 Content builder
+  // 🔹 Main content builder
   Widget _buildContent() {
     // 1️⃣ Not searched yet → show history
     if (!_hasSearched) {
@@ -214,12 +224,14 @@ class _SearchScreenState extends State<SearchScreen> {
       );
     }
 
-    // 3️⃣ Results list
+    // 3️⃣ Search results list
     return ListView.builder(
       padding: const EdgeInsets.all(16),
       itemCount: words.length,
       itemBuilder: (context, i) {
         final word = words[i];
+        final isFav = favorites.contains(word.englishWord);
+
         return Card(
           elevation: 2,
           margin: const EdgeInsets.only(bottom: 12),
@@ -239,6 +251,7 @@ class _SearchScreenState extends State<SearchScreen> {
               padding: const EdgeInsets.all(16),
               child: Row(
                 children: [
+                  // Icon
                   Container(
                     width: 40,
                     height: 40,
@@ -250,6 +263,8 @@ class _SearchScreenState extends State<SearchScreen> {
                         const Icon(Icons.translate, color: Colors.blue),
                   ),
                   const SizedBox(width: 16),
+
+                  // Text
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -273,8 +288,19 @@ class _SearchScreenState extends State<SearchScreen> {
                       ],
                     ),
                   ),
-                  Icon(Icons.arrow_forward_ios,
-                      size: 16, color: Colors.grey[400]),
+
+                  // ❤️ Favorite icon
+                  IconButton(
+                    icon: Icon(
+                      isFav ? Icons.favorite : Icons.favorite_border,
+                      color: isFav ? Colors.red : Colors.grey,
+                    ),
+                    onPressed: () async {
+                      await FavoriteService.toggleFavorite(
+                          word.englishWord);
+                      await _loadFavorites();
+                    },
+                  ),
                 ],
               ),
             ),
@@ -284,7 +310,7 @@ class _SearchScreenState extends State<SearchScreen> {
     );
   }
 
-  // 🔹 Reusable empty state
+  // 🔹 Empty state widget
   Widget _emptyState({required IconData icon, required String text}) {
     return Center(
       child: Column(

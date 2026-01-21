@@ -28,7 +28,7 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
     favoriteWords = await FavoriteService.getFavorites();
     words.clear();
 
-    // Load word detail for each favorite word
+    
     for (String w in favoriteWords) {
       try {
         final result = await ApiService.searchWord(w);

@@ -9,14 +9,11 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  // Controllers
+
   final _emailCtrl = TextEditingController();
   final _passCtrl = TextEditingController();
-  
-  // State for loading indicator
+
   bool _isLoading = false;
-  
-  // Key for simple validation (optional but recommended)
   final _formKey = GlobalKey<FormState>();
 
   @override
@@ -39,7 +36,7 @@ class _LoginScreenState extends State<LoginScreen> {
     // Call API
     final error = await ApiService.login(_emailCtrl.text, _passCtrl.text);
 
-    // Check if widget is still mounted before using context
+    
     if (!mounted) return;
 
     setState(() => _isLoading = false);
@@ -59,7 +56,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white, // Clean background
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -70,7 +67,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // --- Header Section ---
+                  //Header Section
                   const Icon(
                     Icons.lock_outline_rounded,
                     size: 80,
@@ -96,7 +93,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 40),
 
-                  // --- Input Section ---
+                  //Input Section
                   TextField(
                     controller: _emailCtrl,
                     keyboardType: TextInputType.emailAddress,
@@ -131,7 +128,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   
                   const SizedBox(height: 24),
 
-                  // --- Button Section ---
+                  //Button Section
                   SizedBox(
                     height: 50,
                     child: ElevatedButton(
@@ -165,7 +162,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   
                   const SizedBox(height: 16),
 
-                  // --- Footer Section ---
+                  //Footer Section
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [

@@ -20,7 +20,7 @@ class SearchHistoryService {
     // Add to top
     history.insert(0, keyword);
 
-    // Limit history size (optional)
+    // Limit history size 
     if (history.length > 10) {
       history = history.take(10).toList();
     }

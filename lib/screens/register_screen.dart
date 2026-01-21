@@ -9,7 +9,7 @@ class RegisterScreen extends StatefulWidget {
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
-  // Controllers
+  
   final _nameCtrl = TextEditingController();
   final _emailCtrl = TextEditingController();
   final _passCtrl = TextEditingController();
@@ -25,7 +25,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   Future<void> _handleRegister() async {
-    // Basic validation
+    //Basic validation
     if (_nameCtrl.text.isEmpty || _emailCtrl.text.isEmpty || _passCtrl.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please fill in all fields')),
@@ -78,7 +78,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // --- Header ---
+                //Header
                 const Text(
                   'Create Account',
                   textAlign: TextAlign.center,
@@ -99,7 +99,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
                 const SizedBox(height: 40),
 
-                // --- Inputs ---
+                //Inputs
                 TextField(
                   controller: _nameCtrl,
                   decoration: InputDecoration(
@@ -149,7 +149,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 
                 const SizedBox(height: 24),
 
-                // --- Action Button ---
+                //Action Button
                 SizedBox(
                   height: 50,
                   child: ElevatedButton(
@@ -183,7 +183,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                 const SizedBox(height: 16),
 
-                // --- Footer ---
+                //Footer
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [

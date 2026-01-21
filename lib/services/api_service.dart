@@ -6,7 +6,6 @@ import '../utils/token_storage.dart';
 
 class ApiService {
 
-  // LOGIN
   static Future<String?> login(String email, String password) async {
     final res = await http.post(
       Uri.parse('${ApiConfig.baseUrl}/api/auth/login'),
@@ -22,7 +21,7 @@ class ApiService {
     return 'Invalid email or password';
   }
 
-  // REGISTER
+
   static Future<String?> register(
       String name, String email, String password) async {
     final res = await http.post(
@@ -45,7 +44,7 @@ class ApiService {
     return data['error'] ?? 'Register failed';
   }
 
-  // SEARCH WORD
+
   static Future<List<Word>> searchWord(String query) async {
     final token = await TokenStorage.getToken();
 

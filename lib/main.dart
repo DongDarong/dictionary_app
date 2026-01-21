@@ -4,23 +4,26 @@ import 'screens/register_screen.dart';
 import 'screens/search_screen.dart';
 import 'screens/favorite_screen.dart';
 
-
-
 void main() {
-  runApp(DictionaryApp());
+  runApp(const DictionaryApp());
 }
 
 class DictionaryApp extends StatelessWidget {
+  const DictionaryApp({Key? key}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      routes: {
-        '/': (_) => LoginScreen(),
-        '/register': (_) => RegisterScreen(),
-        '/search': (_) => SearchScreen(),
-        '/favorites': (_) => const FavoriteScreen(),
 
+      
+      initialRoute: '/login',
+
+      routes: {
+        '/login': (_) => LoginScreen(),     
+        '/register': (_) => RegisterScreen(),
+        '/search': (_) => const SearchScreen(),
+        '/favorites': (_) => const FavoriteScreen(),
       },
     );
   }

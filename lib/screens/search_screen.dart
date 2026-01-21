@@ -41,7 +41,7 @@ class _SearchScreenState extends State<SearchScreen> {
     if (mounted) setState(() {});
   }
 
-  // 🔹 Load favorites
+  // 🔹 Load favorite words
   Future<void> _loadFavorites() async {
     favorites = await FavoriteService.getFavorites();
     if (mounted) setState(() {});
@@ -59,15 +59,14 @@ class _SearchScreenState extends State<SearchScreen> {
       _hasSearched = true;
     });
 
-    // Save to history
     await SearchHistoryService.addHistory(text);
     await _loadHistory();
 
     try {
-      final results = await ApiService.searchWord(text);
+      final result = await ApiService.searchWord(text);
       if (!mounted) return;
       setState(() {
-        words = results;
+        words = result;
       });
     } catch (e) {
       if (!mounted) return;
@@ -78,9 +77,7 @@ class _SearchScreenState extends State<SearchScreen> {
         ),
       );
     } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -111,17 +108,25 @@ class _SearchScreenState extends State<SearchScreen> {
           style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
         ),
         actions: [
+          // ❤️ Favorite Page
+          IconButton(
+            icon: const Icon(Icons.favorite, color: Colors.red),
+            onPressed: () {
+              Navigator.pushNamed(context, '/favorites');
+            },
+          ),
+          // 🚪 Logout
           IconButton(
             icon: const Icon(Icons.logout, color: Colors.grey),
             onPressed: () {
               Navigator.pushReplacementNamed(context, '/login');
             },
-          )
+          ),
         ],
       ),
       body: Column(
         children: [
-          // 🔍 Search Bar
+          // 🔍 Search bar
           Container(
             padding: const EdgeInsets.all(16),
             color: Colors.white,
@@ -167,9 +172,9 @@ class _SearchScreenState extends State<SearchScreen> {
     );
   }
 
-  // 🔹 Main content builder
+  // 🔹 Content builder
   Widget _buildContent() {
-    // 1️⃣ Not searched yet → show history
+    // 1️⃣ Not searched → show history
     if (!_hasSearched) {
       if (history.isEmpty) {
         return _emptyState(
@@ -216,7 +221,7 @@ class _SearchScreenState extends State<SearchScreen> {
       );
     }
 
-    // 2️⃣ Searched but no results
+    // 2️⃣ Searched but no result
     if (words.isEmpty) {
       return _emptyState(
         icon: Icons.search_off,
@@ -224,7 +229,7 @@ class _SearchScreenState extends State<SearchScreen> {
       );
     }
 
-    // 3️⃣ Search results list
+    // 3️⃣ Search result list
     return ListView.builder(
       padding: const EdgeInsets.all(16),
       itemCount: words.length,
@@ -251,7 +256,6 @@ class _SearchScreenState extends State<SearchScreen> {
               padding: const EdgeInsets.all(16),
               child: Row(
                 children: [
-                  // Icon
                   Container(
                     width: 40,
                     height: 40,
@@ -263,8 +267,6 @@ class _SearchScreenState extends State<SearchScreen> {
                         const Icon(Icons.translate, color: Colors.blue),
                   ),
                   const SizedBox(width: 16),
-
-                  // Text
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -288,11 +290,11 @@ class _SearchScreenState extends State<SearchScreen> {
                       ],
                     ),
                   ),
-
-                  // ❤️ Favorite icon
                   IconButton(
                     icon: Icon(
-                      isFav ? Icons.favorite : Icons.favorite_border,
+                      isFav
+                          ? Icons.favorite
+                          : Icons.favorite_border,
                       color: isFav ? Colors.red : Colors.grey,
                     ),
                     onPressed: () async {

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'screens/login_screen.dart';
 import 'screens/register_screen.dart';
 import 'screens/search_screen.dart';
+import 'screens/favorite_screen.dart';
 
 
 
@@ -18,6 +19,8 @@ class DictionaryApp extends StatelessWidget {
         '/': (_) => LoginScreen(),
         '/register': (_) => RegisterScreen(),
         '/search': (_) => SearchScreen(),
+        '/favorites': (_) => const FavoriteScreen(),
+
       },
     );
   }
